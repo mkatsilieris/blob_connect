@@ -1,3 +1,4 @@
 azure-identity
+azure-mgmt-storage
 azure-storage-blob
 python-dotenv

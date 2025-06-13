@@ -3,10 +3,8 @@
 The script expects the following environment variables to be defined:
 
 ```
-AZURE_TENANT_ID
-AZURE_CLIENT_ID
-AZURE_CLIENT_SECRET
 AZURE_STORAGE_ACCOUNT_NAME
+AZURE_STORAGE_ACCOUNT_KEY
 AZURE_CONTAINER
 ```
 
@@ -17,6 +15,7 @@ environment prior to running the script.
 import os
 
 from azure.identity import ClientSecretCredential
+from azure.mgmt.storage import StorageManagementClient
 from azure.storage.blob import BlobServiceClient
 from dotenv import load_dotenv
 
@@ -33,25 +32,45 @@ def _required_env(name: str) -> str:
 def main() -> None:
     """Authenticate and download the target blob."""
 
+    # Load environment variables
     load_dotenv()
 
-    tenant_id = _required_env("AZURE_TENANT_ID")
-    client_id = _required_env("AZURE_CLIENT_ID")
-    client_secret = _required_env("AZURE_CLIENT_SECRET")
+    resourse_group_name = _required_env("RESOURCE_GROUP_NAME")
     account_name = _required_env("AZURE_STORAGE_ACCOUNT_NAME")
     container_name = _required_env("AZURE_CONTAINER")
 
-    # Authenticate using the service principal
-    credential = ClientSecretCredential(
-        tenant_id=tenant_id,
-        client_id=client_id,
-        client_secret=client_secret,
+    # Azure AD and subscription details
+    tenant_id = _required_env("AZURE_TENANT_ID")
+    client_id = _required_env("AZURE_CLIENT_ID")
+    client_secret = _required_env("AZURE_CLIENT_SECRET")
+    subscription_id = _required_env("AZURE_SUBSCRIPTION_ID")
+
+
+    # Set environmental variables
+
+    # Authenticate using ClientSecretCredential
+    cred = ClientSecretCredential(tenant_id, client_id, client_secret)
+
+    # Initialize the StorageManagementClient
+    storage_mgmt = StorageManagementClient(cred, subscription_id)
+
+    # Replace 'MyRG' and 'mystorageacct' with your resource group and storage account name
+    keys = storage_mgmt.storage_accounts.list_keys(resourse_group_name, account_name)
+    account_key = keys.keys[0].value  # Retrieve the first account key
+
+    print("Account key:", account_key)
+
+    # Generate connection string
+    connection_string = (
+        f"DefaultEndpointsProtocol=https;"
+        f"AccountName={account_name};"
+        f"AccountKey={account_key};"
+        f"EndpointSuffix=core.windows.net"
     )
 
     # Create BlobServiceClient
-    blob_service_client = BlobServiceClient(
-        account_url=f"https://{account_name}.blob.core.windows.net",
-        credential=credential,
+    blob_service_client = BlobServiceClient.from_connection_string(
+        conn_str=connection_string
     )
 
     container_client = blob_service_client.get_container_client(container_name)
