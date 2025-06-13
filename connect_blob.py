@@ -1,15 +1,19 @@
-"""Download a specific blob from Azure Blob Storage.
+"""Authenticate with Azure using environment variables and Azure AD credentials, list folders in a specified blob container, and download a specific blob file to the local machine.
 
-The script expects the following environment variables to be defined:
+Required environment variables (set in a .env file or exported):
+- RESOURCE_GROUP_NAME: Name of the Azure resource group
+- AZURE_STORAGE_ACCOUNT_NAME: Name of the Azure storage account
+- AZURE_CONTAINER: Name of the blob container
+- AZURE_TENANT_ID: Azure AD tenant ID
+- AZURE_CLIENT_ID: Azure AD application (client) ID
+- AZURE_CLIENT_SECRET: Azure AD application secret
+- AZURE_SUBSCRIPTION_ID: Azure subscription ID
 
-```
-AZURE_STORAGE_ACCOUNT_NAME
-AZURE_STORAGE_ACCOUNT_KEY
-AZURE_CONTAINER
-```
-
-The variables can be placed in a ``.env`` file or exported in the
-environment prior to running the script.
+The script will:
+1. Authenticate using Azure AD credentials.
+2. Retrieve the storage account key.
+3. List the top-level folders in the specified blob container.
+4. Download a specific blob (hardcoded in the script) to 'downloaded_file.docx'.
 """
 
 import os
